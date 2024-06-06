@@ -1,5 +1,8 @@
+// importo ed inizializzo prisma
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+// importo RestErrorFormatter
+const RestErrorFormatter = require("../utils/restErrorFormatter");
 
 // funzione di creazione di uno slug unique 
 function createUniqueSlug(title) {
@@ -11,19 +14,21 @@ function createUniqueSlug(title) {
     .replace(/^-+|-+$/g, "");
   let uniqueSlug = slug;
   let count = 1;
+  existingSlugs=[];
   while (existingSlugs.includes(uniqueSlug)) {
     uniqueSlug = `${slug}-${count}`;
     count++;
   }
   existingSlugs.push(uniqueSlug);
+  console.log(uniqueSlug);
   return uniqueSlug;
 }
 
 // funzione di creazione di un elemento in db 
 const store = async (req, res, next) => {
   const { title, slug, content, published } = req.body;
+  // const slug = createUniqueSlug(title);
   try {
-    // const slug = await createUniqueSlug(title);
     const post = await prisma.post.create({
       data: {
         title,
@@ -33,8 +38,12 @@ const store = async (req, res, next) => {
       },
     });
     res.send(`Post creato con successo: ${JSON.stringify(post, null, 2)}`);
+  // tramite catch raccolgo l'eventuale errore generato durante la creazione del post
   } catch (error) {
-    next();
+    // storo in una const la nuova istanza di RestErrorFormatter contente lo status e il message da me personlizzato
+    const errorFormatter = new RestErrorFormatter(404, `Errore nella creazione del post: ${error}`);
+    // passo il tutto che verrà intercettato dal middleware di gestione errori (allErrorFormatter)
+    next(errorFormatter);
   }
 };
 
@@ -97,7 +106,8 @@ const index = async (req, res, next) => {
         totalItems,
     );
   } catch (error) {
-    next();
+    const errorFormatter = new RestErrorFormatter(404, `Errore nei parametri passati per la ricerca: ${error}`);
+    next(errorFormatter);
   }
 };
 
@@ -120,7 +130,8 @@ const show = async (req, res, next) => {
       res.status("401").send("errore");
     }
   } catch (error) {
-    next();
+    const errorFormatter = new RestErrorFormatter(404, `Errore nei parametri passati per la ricerca: ${error}`);
+    next(errorFormatter);
   }
 };
 
@@ -141,7 +152,8 @@ const update = async (req, res, next) => {
     });
     res.send(`Post aggiornato con successo: ${JSON.stringify(post, null, 2)}`);
   } catch {
-    next();
+    const errorFormatter = new RestErrorFormatter(404, `Errore nei parametri passati per l'operazione di update : ${error}`);
+    next(errorFormatter);
   }
 };
 
@@ -156,7 +168,8 @@ const destroy = async (req, res, next) => {
     });
     res.send("Post eliminato con successo");
   } catch {
-    next();
+    const errorFormatter = new RestErrorFormatter(404, `Errore nei parametri passati l'operazione di delete : ${error}`);
+    next(errorFormatter);
   }
 };
 

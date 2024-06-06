@@ -11,6 +11,7 @@ app.use(express.json());
 app.use("/posts", postRouter);
 
 app.use(notFoundFormatter);
+
 app.use(allErrorFormatter);
 
 app.listen(port, () => {
