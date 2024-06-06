@@ -2,7 +2,7 @@
   "name": "-express-api-crud",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "migrate": "prisma migrate dev --name init",
     "dev": "nodemon app.js"
